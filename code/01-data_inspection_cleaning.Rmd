@@ -1,0 +1,94 @@
+---
+title: "01- Data Inspection & Cleaning"
+output:
+  pdf_document: 
+    fig_width: 20
+    fig_height: 9
+  html_document: 
+    toc: true
+    toc_float:
+        collapsed: false
+        smooth_scroll: true
+    fig_width: 20
+---
+
+# Directory and doc rules
+```{r, setup, eval=TRUE, include=TRUE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+# Load libraries 
+```{r}
+
+library(cardx)
+library(cowplot)
+library(dplyr)
+library(ggplot2)
+library(gtsummary)
+library(ggsurvfit)
+library(readr)
+library(stringr)
+library(survival)
+library(tidyverse)
+
+```
+
+# Load data
+```{r}
+
+dat <- read_csv("../data/20260125_mytilus_all_plates.csv", show_col_types = FALSE)
+
+```
+
+# Data prep: only when running samples in triplicate
+```{r}
+
+#average across defined columns
+
+dat_avg <- dat %>%
+  mutate(
+    row = str_extract(well, "^[A-H]"),
+    col = as.integer(str_extract(well, "\\d+$")),
+    col_start = case_when(
+      col %in% 1:3   ~ 1L,
+      col %in% 4:6   ~ 4L,
+      col %in% 7:9   ~ 7L,
+      col %in% 10:12 ~ 10L,
+      TRUE ~ NA_integer_
+    )
+  ) %>%
+  group_by(plate_id, timepoint, row, col_start) %>%
+  summarise(
+    # keep original metadata columns (should be constant within group)
+    sample_id = first(sample_id),
+    date = first(date),
+    time = first(time),
+    actual_temperature = first(actual_temperature),
+
+    # averaged value across the 3 wells in the group
+    activity = mean(activity, na.rm = TRUE),
+
+    # optional: keep n wells used (nice QC check)
+    n_wells = sum(!is.na(activity)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    well = paste0(row, col_start)
+  ) %>%
+  select(sample_id, activity, well, plate_id, timepoint, date, time, actual_temperature, n_wells)
+
+# 3) Write out the new averaged table
+write_csv(dat_avg, "../data/20260125_mytilus_all_plates_averaged.csv")
+
+```
+
+
+
+
+
+
+
+
+
