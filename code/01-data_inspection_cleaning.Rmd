@@ -84,7 +84,18 @@ write_csv(dat_avg, "../data/20260125_mytilus_all_plates_averaged.csv")
 
 ```
 
+# Read-in and inspect new table
+```{r}
 
+#summary stats before plotting
+
+
+```
+
+# plot based on the 
+```{r}
+
+```
 
 
 
